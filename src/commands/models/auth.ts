@@ -14,6 +14,7 @@ import {
   clearAuthProfileCooldown,
   listProfilesForProvider,
   loadAuthProfileStoreForRuntime,
+  removeStaleOAuthProfiles,
   upsertAuthProfile,
 } from "../../agents/auth-profiles.js";
 import type { AuthProfileCredential } from "../../agents/auth-profiles/types.js";
@@ -222,6 +223,19 @@ async function persistProviderAuthResult(params: {
     upsertAuthProfile({
       profileId: profile.profileId,
       credential: profile.credential,
+      agentDir: params.agentDir,
+    });
+  }
+
+  // Remove stale OAuth profiles for the same provider(s) that were not part of
+  // this auth result.  This prevents orphaned `:default` profiles from lingering
+  // when re-auth returns a named profile (e.g. `provider:user@example.com`).
+  const newProfileIds = new Set(params.result.profiles.map((p) => p.profileId));
+  const providers = new Set(params.result.profiles.map((p) => p.credential.provider));
+  for (const provider of providers) {
+    await removeStaleOAuthProfiles({
+      provider,
+      keepProfileIds: newProfileIds,
       agentDir: params.agentDir,
     });
   }

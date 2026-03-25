@@ -84,6 +84,64 @@ export function listProfilesForProvider(store: AuthProfileStore, provider: strin
     .map(([id]) => id);
 }
 
+/**
+ * Remove OAuth profiles for a provider that were NOT part of the latest auth
+ * result.  This prevents stale `:default` profiles from lingering after a
+ * re-authentication that returns a named profile (e.g. `provider:email`).
+ *
+ * Only OAuth profiles are pruned — API-key and token profiles are left alone
+ * because they are managed explicitly by the user.
+ */
+export async function removeStaleOAuthProfiles(params: {
+  provider: string;
+  keepProfileIds: Set<string>;
+  agentDir?: string;
+}): Promise<void> {
+  const providerKey = normalizeProviderIdForAuth(params.provider);
+  await updateAuthProfileStoreWithLock({
+    agentDir: params.agentDir,
+    updater: (store) => {
+      const stale = Object.entries(store.profiles).filter(
+        ([id, cred]) =>
+          normalizeProviderIdForAuth(cred.provider) === providerKey &&
+          cred.type === "oauth" &&
+          !params.keepProfileIds.has(id),
+      );
+      if (stale.length === 0) {
+        return false;
+      }
+      for (const [id] of stale) {
+        delete store.profiles[id];
+        if (store.usageStats?.[id]) {
+          delete store.usageStats[id];
+        }
+      }
+      // Clean up order lists.
+      if (store.order) {
+        for (const [provider, list] of Object.entries(store.order)) {
+          const filtered = list.filter((id) => !stale.some(([s]) => s === id));
+          if (filtered.length !== list.length) {
+            if (filtered.length > 0) {
+              store.order[provider] = filtered;
+            } else {
+              delete store.order[provider];
+            }
+          }
+        }
+      }
+      // Clean up lastGood.
+      if (store.lastGood) {
+        for (const [provider, profileId] of Object.entries(store.lastGood)) {
+          if (stale.some(([id]) => id === profileId)) {
+            delete store.lastGood[provider];
+          }
+        }
+      }
+      return true;
+    },
+  });
+}
+
 export async function markAuthProfileGood(params: {
   store: AuthProfileStore;
   provider: string;
