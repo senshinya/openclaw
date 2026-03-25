@@ -2,13 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../../config/config.js";
 import type { AuthProfileStore } from "./types.js";
 
-vi.mock("../cli-credentials.js", () => ({
-  readCodexCliCredentialsCached: () => null,
-  readQwenCliCredentialsCached: () => null,
-  readMiniMaxCliCredentialsCached: () => null,
-  resetCliCredentialCachesForTest: () => undefined,
-}));
-
 vi.mock("../../plugins/provider-runtime.runtime.js", () => ({
   formatProviderAuthProfileApiKeyWithPlugin: async (params: { context?: { access?: string } }) =>
     params.context?.access,

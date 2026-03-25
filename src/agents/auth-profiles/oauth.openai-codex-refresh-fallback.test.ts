@@ -30,13 +30,6 @@ const {
   buildProviderAuthDoctorHintWithPluginMock: vi.fn(async () => undefined),
 }));
 
-vi.mock("../cli-credentials.js", () => ({
-  readCodexCliCredentialsCached: () => null,
-  readQwenCliCredentialsCached: () => null,
-  readMiniMaxCliCredentialsCached: () => null,
-  resetCliCredentialCachesForTest: () => undefined,
-}));
-
 vi.mock("@mariozechner/pi-ai/oauth", async () => {
   const actual = await vi.importActual<typeof import("@mariozechner/pi-ai/oauth")>(
     "@mariozechner/pi-ai/oauth",

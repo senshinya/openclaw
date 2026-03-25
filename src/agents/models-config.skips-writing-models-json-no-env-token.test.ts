@@ -12,10 +12,6 @@ import {
 } from "./models-config.e2e-harness.js";
 import type { ProviderConfig as ModelsProviderConfig } from "./models-config.providers.js";
 
-vi.mock("./auth-profiles/external-cli-sync.js", () => ({
-  syncExternalCliCredentials: () => false,
-}));
-
 vi.mock("./models-config.providers.js", async () => {
   const actual = await vi.importActual<typeof import("./models-config.providers.js")>(
     "./models-config.providers.js",

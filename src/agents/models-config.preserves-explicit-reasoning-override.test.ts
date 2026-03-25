@@ -5,10 +5,6 @@ import {
   withModelsTempHome as withTempHome,
 } from "./models-config.e2e-harness.js";
 
-vi.mock("./auth-profiles/external-cli-sync.js", () => ({
-  syncExternalCliCredentials: () => false,
-}));
-
 installModelsConfigTestHooks();
 
 let clearConfigCache: typeof import("../config/config.js").clearConfigCache;

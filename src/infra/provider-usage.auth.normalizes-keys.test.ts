@@ -13,12 +13,6 @@ vi.mock("../plugins/provider-runtime.js", () => ({
   resolveProviderUsageAuthWithPlugin: resolveProviderUsageAuthWithPluginMock,
 }));
 
-vi.mock("../agents/cli-credentials.js", () => ({
-  readCodexCliCredentialsCached: () => null,
-  readMiniMaxCliCredentialsCached: () => null,
-  readQwenCliCredentialsCached: () => null,
-}));
-
 let resolveProviderAuths: typeof import("./provider-usage.auth.js").resolveProviderAuths;
 let clearRuntimeAuthProfileStoreSnapshots: typeof import("../agents/auth-profiles.js").clearRuntimeAuthProfileStoreSnapshots;
 let clearConfigCache: typeof import("../config/config.js").clearConfigCache;
