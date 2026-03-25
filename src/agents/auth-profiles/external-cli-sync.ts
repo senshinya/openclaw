@@ -116,6 +116,18 @@ function syncExternalCliCredentialsForProvider(
     return false;
   }
 
+  // Only overwrite if the external credential is actually newer (later expiry).
+  // This prevents stale tokens from an external CLI (e.g. ~/.codex/auth.json)
+  // from clobbering a token that openclaw already refreshed successfully.
+  if (
+    existingOAuth &&
+    Number.isFinite(existingOAuth.expires) &&
+    Number.isFinite(creds.expires) &&
+    existingOAuth.expires >= creds.expires
+  ) {
+    return false;
+  }
+
   store.profiles[profileId] = creds;
   if (options.log !== false) {
     log.info(`synced ${provider} credentials from external cli`, {

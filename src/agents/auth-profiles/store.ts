@@ -586,4 +586,12 @@ export function saveAuthProfileStore(store: AuthProfileStore, agentDir?: string)
   } satisfies AuthProfileStore;
   saveJsonFile(authPath, payload);
   writeCachedAuthProfileStore(authPath, readAuthStoreMtimeMs(authPath), payload);
+
+  // Keep the in-memory runtime snapshot in sync with disk so that subsequent
+  // reads within the same process see the freshly-saved credentials instead of
+  // returning stale tokens cached at gateway startup.
+  const storeKey = resolveRuntimeStoreKey(agentDir);
+  if (runtimeAuthStoreSnapshots.has(storeKey)) {
+    runtimeAuthStoreSnapshots.set(storeKey, cloneAuthProfileStore(store));
+  }
 }

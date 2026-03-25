@@ -217,6 +217,18 @@ async function refreshOAuthTokenWithLock(params: {
       ...result.newCredentials,
       type: "oauth",
     };
+
+    // Clear disabledUntil / cooldown on successful refresh so the profile is
+    // immediately usable again (fixes #49070 — re-auth didn't clear the flag).
+    if (store.usageStats?.[params.profileId]) {
+      const stats = store.usageStats[params.profileId];
+      stats.disabledUntil = undefined;
+      stats.disabledReason = undefined;
+      stats.cooldownUntil = undefined;
+      stats.errorCount = 0;
+      stats.failureCounts = undefined;
+    }
+
     saveAuthProfileStore(store, params.agentDir);
 
     return result;
