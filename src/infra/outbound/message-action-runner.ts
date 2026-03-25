@@ -389,7 +389,8 @@ async function handleSendAction(ctx: ResolvedActionContext): Promise<MessageActi
     readStringArrayParam(params, "filePath", { trim: false }) ??
     readStringArrayParam(params, "fileUrl", { trim: false }) ??
     [];
-  const hasMediaHints = mediaHints.length > 0;
+  const hasMediaHints =
+    mediaHints.length > 0 || (Array.isArray(params.mediaUrls) && params.mediaUrls.length > 0);
   const hasButtons = Array.isArray(params.buttons) && params.buttons.length > 0;
   const hasCard = params.card != null && typeof params.card === "object";
   const hasComponents = params.components != null && typeof params.components === "object";
@@ -432,6 +433,11 @@ async function handleSendAction(ctx: ResolvedActionContext): Promise<MessageActi
   };
   for (const hint of mediaHints) {
     pushMedia(hint);
+  }
+  // Also merge the dedicated mediaUrls array param (tool schema field).
+  const explicitMediaUrls = readStringArrayParam(params, "mediaUrls", { trim: false });
+  for (const url of explicitMediaUrls ?? []) {
+    pushMedia(url);
   }
   for (const url of parsed.mediaUrls ?? []) {
     pushMedia(url);

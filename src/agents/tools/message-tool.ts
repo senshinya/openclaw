@@ -97,6 +97,12 @@ function buildSendSchema(options: { includeInteractive: boolean }) {
         description: "Media URL or local path. data: URLs are not supported here, use buffer.",
       }),
     ),
+    mediaUrls: Type.Optional(
+      Type.Array(Type.String(), {
+        description:
+          "Multiple media URLs or local paths for album/multi-image sends. data: URLs are not supported here, use buffer.",
+      }),
+    ),
     filename: Type.Optional(Type.String()),
     buffer: Type.Optional(
       Type.String({
