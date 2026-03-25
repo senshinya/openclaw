@@ -12,8 +12,8 @@ export function registerMessageSendCommand(message: Command, helpers: MessageCli
             .option("-m, --message <text>", "Message body (required unless --media is set)"),
         )
         .option(
-          "--media <path-or-url>",
-          "Attach media (image/audio/video/document). Accepts local paths or URLs.",
+          "--media <path-or-url...>",
+          "Attach media (image/audio/video/document). Accepts local paths or URLs. Repeatable for albums.",
         )
         .option(
           "--interactive <json>",

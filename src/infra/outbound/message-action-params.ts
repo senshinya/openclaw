@@ -212,6 +212,24 @@ export async function normalizeSandboxMediaParams(params: {
   const sandboxRoot =
     params.mediaPolicy.mode === "sandbox" ? params.mediaPolicy.sandboxRoot.trim() : undefined;
   for (const key of SANDBOX_MEDIA_PARAM_KEYS) {
+    const rawValue = params.args[key];
+    // Handle array values (e.g. --media passed multiple times).
+    if (Array.isArray(rawValue)) {
+      const normalizedArr: string[] = [];
+      for (const entry of rawValue) {
+        if (typeof entry !== "string" || !entry.trim()) {
+          continue;
+        }
+        assertMediaNotDataUrl(entry);
+        if (sandboxRoot) {
+          normalizedArr.push(await resolveSandboxedMediaSource({ media: entry, sandboxRoot }));
+        } else {
+          normalizedArr.push(entry);
+        }
+      }
+      params.args[key] = normalizedArr;
+      continue;
+    }
     const raw = readMediaParam(params.args, key);
     if (!raw) {
       continue;

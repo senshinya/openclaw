@@ -380,13 +380,16 @@ async function handleSendAction(ctx: ResolvedActionContext): Promise<MessageActi
   throwIfAborted(abortSignal);
   const action: ChannelMessageActionName = "send";
   const to = readStringParam(params, "to", { required: true });
-  // Support media, path, and filePath parameters for attachments
-  const mediaHint =
-    readStringParam(params, "media", { trim: false }) ??
-    readStringParam(params, "mediaUrl", { trim: false }) ??
-    readStringParam(params, "path", { trim: false }) ??
-    readStringParam(params, "filePath", { trim: false }) ??
-    readStringParam(params, "fileUrl", { trim: false });
+  // Support media, path, and filePath parameters for attachments.
+  // --media may be a single string or an array (repeatable CLI flag / tool array).
+  const mediaHints: string[] =
+    readStringArrayParam(params, "media", { trim: false }) ??
+    readStringArrayParam(params, "mediaUrl", { trim: false }) ??
+    readStringArrayParam(params, "path", { trim: false }) ??
+    readStringArrayParam(params, "filePath", { trim: false }) ??
+    readStringArrayParam(params, "fileUrl", { trim: false }) ??
+    [];
+  const hasMediaHints = mediaHints.length > 0;
   const hasButtons = Array.isArray(params.buttons) && params.buttons.length > 0;
   const hasCard = params.card != null && typeof params.card === "object";
   const hasComponents = params.components != null && typeof params.components === "object";
@@ -398,7 +401,12 @@ async function handleSendAction(ctx: ResolvedActionContext): Promise<MessageActi
   let message =
     readStringParam(params, "message", {
       required:
-        !mediaHint && !hasButtons && !hasCard && !hasComponents && !hasInteractive && !hasBlocks,
+        !hasMediaHints &&
+        !hasButtons &&
+        !hasCard &&
+        !hasComponents &&
+        !hasInteractive &&
+        !hasBlocks,
       allowEmpty: true,
     }) ?? "";
   if (message.includes("\\n")) {
@@ -422,7 +430,9 @@ async function handleSendAction(ctx: ResolvedActionContext): Promise<MessageActi
     seenMedia.add(trimmed);
     mergedMediaUrls.push(trimmed);
   };
-  pushMedia(mediaHint);
+  for (const hint of mediaHints) {
+    pushMedia(hint);
+  }
   for (const url of parsed.mediaUrls ?? []) {
     pushMedia(url);
   }
@@ -440,10 +450,10 @@ async function handleSendAction(ctx: ResolvedActionContext): Promise<MessageActi
   if (!params.replyTo && parsed.replyToId) {
     params.replyTo = parsed.replyToId;
   }
-  if (!params.media) {
-    // Use path/filePath if media not set, then fall back to parsed directives
-    params.media = mergedMediaUrls[0] || undefined;
-  }
+  // Normalize params.media to a single string for downstream consumers that
+  // expect a scalar (e.g. readStringParam later, plugin dispatch).  The full
+  // list is carried in mergedMediaUrls.
+  params.media = mergedMediaUrls[0] || undefined;
 
   message = await maybeApplyCrossContextMarker({
     cfg,
